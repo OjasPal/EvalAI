@@ -1,11 +1,23 @@
+# Python
 __pycache__/
 *.py[cod]
 .venv/
+venv/
 .env
+
+# Jupyter
 .ipynb_checkpoints/
 
+# Datasets
 data/raw/*
 data/processed/*
+
+# Trained models
 models/*
 
-!.gitkeep
+# VS Code
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
