@@ -231,16 +231,16 @@ def inject_css() -> None:
         .stTextArea textarea {
             font-size: .98rem;
             line-height: 1.58;
-            color: #16232b !important;
-            -webkit-text-fill-color: #16232b;
-            background: #f2f5f6 !important;
+            color: #f4f8fa !important;
+            -webkit-text-fill-color: #f4f8fa;
+            background: #668595 !important;
             caret-color: #0f6b6a;
             border: 1px solid #9aaeb8;
         }
 
         .stTextArea textarea::placeholder {
-            color: #52636d !important;
-            -webkit-text-fill-color: #52636d;
+            color: #dce8ed !important;
+            -webkit-text-fill-color: #dce8ed;
             opacity: 1;
         }
 
