@@ -1,0 +1,1 @@
+"""EvalAI FastAPI application package."""
