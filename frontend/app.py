@@ -231,7 +231,22 @@ def inject_css() -> None:
         .stTextArea textarea {
             font-size: .98rem;
             line-height: 1.58;
-            color: #1a242b;
+            color: #16232b !important;
+            -webkit-text-fill-color: #16232b;
+            background: #f2f5f6 !important;
+            caret-color: #0f6b6a;
+            border: 1px solid #9aaeb8;
+        }
+
+        .stTextArea textarea::placeholder {
+            color: #52636d !important;
+            -webkit-text-fill-color: #52636d;
+            opacity: 1;
+        }
+
+        .stTextArea textarea:focus {
+            border-color: #0f6b6a;
+            box-shadow: 0 0 0 2px rgba(15, 107, 106, .18);
         }
 
         .stRadio label {
