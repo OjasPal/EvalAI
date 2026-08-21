@@ -1,37 +1,106 @@
 # EvalAI
 
-EvalAI is a local app that compares two AI responses and predicts which one a human is more likely to prefer.
+## Smart India Hackathon Project
 
-This guide is written for beginners and teammates who are running the project for the first time.
+EvalAI is an explainable human-preference evaluation platform for competing large language model (LLM) responses. It generates two answers for the same prompt, uses a trained RoBERTa reward model to predict the preferred response, and combines that prediction with human feedback and evaluation diagnostics.
 
-## What You Will Get
+This repository contains the working prototype for our Smart India Hackathon (SIH) project. It is designed as a local-first demonstration that makes LLM response quality easier to compare, review, and analyze.
 
-With this repo, you can:
-1. Enter a prompt.
-2. Generate two responses from two different Ollama models.
-3. Compare those responses with the trained RoBERTa reward model.
-4. Save human feedback as A, B, or Tie.
-5. Run held-out evaluation and bias checks.
+## Problem Statement
 
-## Architecture In One View
+Different LLMs can produce very different answers to the same prompt. Comparing those answers manually is slow, subjective, and difficult to reproduce. A useful evaluation workflow should:
+
+- Compare responses under the same prompt.
+- Provide a consistent model-based preference signal.
+- Keep a human evaluator in the loop.
+- Measure performance on held-out data.
+- Surface potential position and verbosity bias.
+
+## Our Solution
+
+EvalAI creates a complete comparison loop:
+
+1. A user enters a prompt.
+2. Two locally hosted Ollama models generate competing responses.
+3. A trained RoBERTa reward model scores both responses.
+4. The system predicts whether Response A or Response B is preferred.
+5. A human evaluator can submit A, B, or Tie feedback.
+6. Held-out evaluation and bias checks measure model behavior.
+
+The result is a practical evaluation interface rather than a single opaque score.
+
+## Key Features
+
+- **Side-by-side response generation:** Generate two answers from the same prompt.
+- **Preference prediction:** Use the trained RoBERTa model to rank the responses.
+- **Human review:** Record human preference as A, B, or Tie.
+- **Held-out evaluation:** Measure accuracy, precision, recall, F1-score, and ROC-AUC.
+- **Bias diagnostics:** Check sensitivity to response order and answer verbosity.
+- **Local and private workflow:** Run the application with local models and local data.
+- **Interactive dashboard:** Use the Streamlit interface to compare, review, and inspect results.
+
+## System Architecture
 
 ```text
-Prompt
-  -> Ollama model A (llama3.2) -> Response A
-  -> Ollama model B (qwen2.5:3b) -> Response B
-  -> FastAPI backend
-  -> RoBERTa reward model scoring
-  -> Predicted winner: A or B
+User prompt
+    |
+    +--> Ollama model A (llama3.2) ----> Response A --+
+    |                                                  |
+    +--> Ollama model B (qwen2.5:3b) -> Response B --+--> FastAPI backend
+                                                       |
+                                                       +--> RoBERTa reward model
+                                                       |
+                                                       +--> Predicted winner: A or B
+                                                       |
+                                                       +--> Human feedback and diagnostics
 ```
+
+## Technology Stack
+
+| Layer | Technology |
+| --- | --- |
+| User interface | Streamlit |
+| Application API | FastAPI and Uvicorn |
+| Preference model | Fine-tuned RoBERTa reward model |
+| Local response generation | Ollama with `llama3.2` and `qwen2.5:3b` |
+| Data and feedback | CSV, JSONL, and local model artifacts |
+| Testing | Python `unittest`, compilation checks |
+
+## Demonstration Flow
+
+1. Open the **Compare** tab.
+2. Enter a prompt and generate two responses, or paste responses manually.
+3. Select **Compare Responses** to view scores, confidence, and the predicted winner.
+4. Open **Human Feedback** and record your preference.
+5. Open **Evaluation & Bias** to run benchmark and diagnostic checks.
+6. Use the **About** tab to confirm backend and model readiness.
+
+## Project Structure
+
+```text
+EvalAI/
+├── backend/                 # FastAPI application, routes, model, and storage
+│   ├── app/
+│   ├── data/
+│   └── tests/
+├── frontend/                # Streamlit dashboard and theme configuration
+├── notebooks/               # Dataset inspection and model artifacts
+├── preprocess/              # Dataset preprocessing and data splits
+├── src/                     # Training, inference, preprocessing, and evaluation
+├── requirements.txt
+└── README.md
+```
+
+## Requirements
+
+- Python 3.10 or newer
+- Git
+- Ollama: https://ollama.com/download
+- The trained model directory at `notebooks/roberta_reward_model_FINAL`
 
 ## Before You Start
 
-Install these first:
-1. Python 3.10 or newer
-2. Git
-3. Ollama: https://ollama.com/download
-
-Also make sure this model directory exists in your local repo:
+Make sure the trained model directory exists in the repository:
 
 ```text
 notebooks/roberta_reward_model_FINAL
@@ -51,7 +120,7 @@ tokenizer_config.json
 Run these commands in order.
 
 ```powershell
-cd C:\Users\HP\Downloads\test
+cd <parent-directory>
 git clone <your-repo-url>
 cd EvalAI
 
@@ -80,7 +149,7 @@ ollama serve
 Terminal 2 (Backend):
 
 ```powershell
-cd C:\Users\HP\Downloads\test\EvalAI
+cd <project-directory>\EvalAI
 .\.venv\Scripts\Activate.ps1
 python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
 ```
@@ -88,7 +157,7 @@ python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
 Terminal 3 (Frontend):
 
 ```powershell
-cd C:\Users\HP\Downloads\test\EvalAI
+cd <project-directory>\EvalAI
 .\.venv\Scripts\Activate.ps1
 python -m streamlit run frontend/app.py --server.port 8502
 ```
@@ -188,7 +257,7 @@ python -m unittest discover -s backend/tests -t backend -v
 python -m compileall -q backend frontend
 ```
 
-## Common Beginner Errors And Fixes
+## Troubleshooting
 
 ### 1) Copy-Item says path not found
 
@@ -197,7 +266,7 @@ Cause: you are not in repo root.
 Fix:
 
 ```powershell
-cd C:\Users\HP\Downloads\test\EvalAI
+cd <project-directory>\EvalAI
 Copy-Item backend\.env.example backend\.env
 ```
 
@@ -223,11 +292,29 @@ ollama pull qwen2.5:3b
 
 This is normal. Evaluation runs the held-out test set and additional bias checks.
 
-## Notes For SI Project Usage
+## Data, Privacy, and Scope
 
-This repo is suitable for local SI project demonstration:
-1. Core flows are implemented.
-2. Tests and compile checks are available.
-3. UI supports compare, feedback, and evaluation.
+- Response generation runs through locally hosted Ollama models.
+- Human feedback is stored locally at `backend/data/feedback.jsonl`.
+- The prototype is intended for local evaluation and demonstration.
+- The current implementation is not positioned as an internet-scale production service.
+- Do not commit local `.env` files, credentials, or private datasets.
 
-It is built for local/demo use, not internet-scale deployment.
+## Limitations
+
+- Preference quality depends on the training data and reward model.
+- Held-out evaluation can take several minutes on CPU.
+- Ollama must be running and both configured generation models must be available.
+- A model prediction is a decision-support signal, not a replacement for human judgment.
+
+## Future Scope
+
+- Add authentication and role-based evaluator access.
+- Support additional generation providers and reward models.
+- Add persistent experiment tracking and richer result visualizations.
+- Expand multilingual evaluation and domain-specific benchmarks.
+- Add deployment support for shared team or institutional environments.
+
+## License
+
+This project is distributed under the license included in `LICENSE`.

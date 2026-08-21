@@ -1,5 +1,5 @@
 import os
-from typing import Any
+from typing import Any, cast
 
 import requests
 import streamlit as st
@@ -14,19 +14,19 @@ st.set_page_config(
 DEFAULT_API = os.getenv("BACKEND_URL", "http://127.0.0.1:8000")
 
 
-def inject_css() -> None:
+def inject_css(dark_mode: bool = False) -> None:
     st.markdown(
         """
         <style>
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&display=swap');
 
         :root {
-            --brand-teal: #0f6b6a;
-            --brand-orange: #d96a3b;
-            --surface: #dbeaf4;
-            --text: #1a1f24;
-            --muted: #5b6670;
-            --heading: #14242f;
+            --brand-teal: #4f46e5;
+            --brand-orange: #ea580c;
+            --surface: #f1f5f9;
+            --text: #1e293b;
+            --muted: #64748b;
+            --heading: #0f172a;
         }
 
         html, body, [class*="css"] {
@@ -85,10 +85,10 @@ def inject_css() -> None:
         .hero {
             padding: 1.6rem 1.8rem;
             border-radius: 18px;
-            border: 1px solid rgba(58, 128, 173, .55);
+            border: 1px solid rgba(79, 70, 229, .35);
             margin-bottom: 1.2rem;
-            background: #4f94c2;
-            box-shadow: 0 12px 34px rgba(31, 73, 108, .24);
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            box-shadow: 0 12px 34px rgba(79, 70, 229, .28);
         }
 
         .hero h1 {
@@ -122,7 +122,8 @@ def inject_css() -> None:
             margin-bottom: .35rem;
             font-weight: 700;
             letter-spacing: .01em;
-            background: rgba(38,112,112,.1);
+            background: rgba(79,70,229,.1);
+            color: #4338ca;
         }
 
         .response-heading.a {
@@ -131,22 +132,23 @@ def inject_css() -> None:
 
         .response-heading.b {
             border-left: 4px solid var(--brand-orange);
-            background: rgba(224,107,60,.1);
+            background: rgba(234,88,12,.1);
+            color: #c2410c;
         }
 
         .winner-card {
             padding: 1.35rem;
             border-radius: 10px;
-            border: 1px solid rgba(224,107,60,.35);
+            border: 1px solid rgba(234,88,12,.3);
             margin: .8rem 0 1rem;
-            background: linear-gradient(110deg, rgba(224,107,60,.16), rgba(79,148,194,.12));
+            background: linear-gradient(110deg, rgba(234,88,12,.14), rgba(79,70,229,.1));
         }
 
         .winner-card h2 {
             margin: 0;
             font-size: 1.38rem;
             font-weight: 800;
-            color: #2b2b2b;
+            color: #1e293b;
         }
 
         .small-muted {
@@ -161,10 +163,10 @@ def inject_css() -> None:
         }
 
         div[data-testid="stMetric"] {
-            border: 1px solid rgba(128,128,128,.18);
+            border: 1px solid rgba(148,163,184,.35);
             border-radius: 10px;
             padding: .68rem;
-            background: rgba(69, 123, 161, .12);
+            background: rgba(79, 70, 229, .06);
         }
 
         [data-testid="stMetricLabel"] {
@@ -178,7 +180,7 @@ def inject_css() -> None:
         [data-testid="stMetricValue"] {
             font-size: 1.22rem;
             font-weight: 760;
-            color: #182b34;
+            color: #0f172a;
         }
 
         div.stButton > button {
@@ -195,70 +197,78 @@ def inject_css() -> None:
         }
 
         [data-testid="stTabs"] [role="tablist"] {
-            gap: .55rem;
+            gap: .9rem;
             padding: .35rem;
-            border: 1px solid rgba(65, 98, 117, .18);
+            border: 1px solid rgba(148, 163, 184, .3);
             border-radius: 14px;
-            background: linear-gradient(180deg, rgba(89, 145, 183, .26), rgba(62, 120, 161, .24));
+            background: #f1f5f9;
+            overflow: hidden;
         }
 
         [data-testid="stTabs"] button {
+            flex: 1 1 0;
             font-weight: 730;
             font-size: .95rem;
             letter-spacing: .01em;
-            color: #2d4551;
+            color: #475569;
             border-radius: 10px;
             border: 1px solid transparent;
             padding: .55rem .88rem;
-            background: rgba(55, 101, 138, .2);
+            background: transparent;
             transition: all .2s ease;
         }
 
         [data-testid="stTabs"] button[aria-selected="true"] {
-            color: #0f4f66;
-            background: linear-gradient(180deg, rgba(116, 170, 206, .95), rgba(91, 149, 188, .95));
-            border-color: rgba(30, 105, 139, .28);
-            box-shadow: 0 4px 12px rgba(34, 86, 112, .12);
+            color: #ffffff;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-color: transparent;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, .3);
             font-weight: 780;
         }
 
         [data-testid="stTabs"] button:hover {
-            color: #163d4e;
-            background: rgba(98, 154, 192, .42);
-            border-color: rgba(33, 92, 121, .22);
+            color: #4338ca;
+            background: rgba(79, 70, 229, .1);
+            border-color: rgba(79, 70, 229, .2);
         }
 
         .stTextArea textarea {
             font-size: .98rem;
             line-height: 1.58;
-            color: #f4f8fa !important;
-            -webkit-text-fill-color: #f4f8fa;
-            background: #668595 !important;
-            caret-color: #0f6b6a;
-            border: 1px solid #9aaeb8;
+            color: #1e293b !important;
+            -webkit-text-fill-color: #1e293b;
+            background: #ffffff !important;
+            caret-color: #4f46e5;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
         }
 
         .stTextArea textarea::placeholder {
-            color: #dce8ed !important;
-            -webkit-text-fill-color: #dce8ed;
+            color: #94a3b8 !important;
+            -webkit-text-fill-color: #94a3b8;
             opacity: 1;
         }
 
         .stTextArea textarea:focus {
-            border-color: #0f6b6a;
-            box-shadow: 0 0 0 2px rgba(15, 107, 106, .18);
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, .18);
+        }
+
+        .stCodeBlock {
+            border-radius: 10px;
+            overflow: hidden;
         }
 
         .stRadio label {
             font-weight: 600;
-            color: #1f3139;
+            color: #1e293b;
         }
 
         .about-card {
-            border: 1px solid rgba(128,128,128,.2);
+            border: 1px solid rgba(148,163,184,.3);
             border-radius: 14px;
             padding: 1rem;
-            background: rgba(79, 148, 194, .14);
+            background: rgba(79, 70, 229, .06);
             min-height: 120px;
         }
 
@@ -276,12 +286,201 @@ def inject_css() -> None:
         unsafe_allow_html=True,
     )
 
+    if dark_mode:
+        st.markdown(
+            """
+            <style>
+            :root {
+                --surface: #1e293b;
+                --text: #f1f5f9;
+                --muted: #94a3b8;
+                --heading: #f8fafc;
+            }
+
+            .stApp {
+                background: #0f172a;
+            }
+
+            [data-testid="stCaptionContainer"],
+            .about-card p,
+            .small-muted {
+                color: #94a3b8;
+            }
+
+            .workflow-note,
+            .about-card,
+            div[data-testid="stMetric"] {
+                background: rgba(30, 41, 59, .8);
+                border-color: rgba(148, 163, 184, .25);
+            }
+
+            .workflow-note {
+                color: #f1f5f9 !important;
+            }
+
+            .winner-card h2,
+            [data-testid="stMetricValue"] {
+                color: #f8fafc;
+            }
+
+            [data-testid="stMetricLabel"] {
+                color: #94a3b8;
+            }
+
+            .stTextArea textarea {
+                background: #1e293b !important;
+                color: #f1f5f9 !important;
+                -webkit-text-fill-color: #f1f5f9;
+                border: 1px solid #334155;
+            }
+
+            [data-testid="stTabs"] [role="tablist"] {
+                background: #1e293b;
+                border-color: rgba(148, 163, 184, .25);
+            }
+
+            [data-testid="stTabs"] button {
+                color: #cbd5e1;
+                background: transparent;
+            }
+
+            [data-testid="stTabs"] button[aria-selected="true"] {
+                color: #ffffff;
+                background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            }
+
+            [data-testid="stTabs"] button:hover {
+                color: #f8fafc;
+            }
+
+            /* Force readable text on native Streamlit widgets that keep their
+               own fixed light-theme colors and would otherwise merge into
+               the dark background. */
+            [data-testid="stMarkdownContainer"] p,
+            [data-testid="stMarkdownContainer"] span,
+            [data-testid="stMarkdownContainer"] li,
+            [data-testid="stMarkdownContainer"] strong,
+            [data-testid="stWidgetLabel"] p,
+            [data-testid="stWidgetLabel"] label,
+            [data-testid="stText"],
+            .stRadio label,
+            .stRadio label p,
+            .stRadio [data-testid="stMarkdownContainer"] {
+                color: #f1f5f9 !important;
+            }
+
+            div.stButton > button {
+                background-color: #1e293b !important;
+                color: #f1f5f9 !important;
+                border: 1px solid #334155 !important;
+            }
+
+            div.stButton > button:hover {
+                background-color: #334155 !important;
+                border-color: #6366f1 !important;
+                color: #ffffff !important;
+            }
+
+            div.stButton > button[kind="primary"] {
+                background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+                color: #ffffff !important;
+                border: none !important;
+            }
+
+            div.stButton > button:disabled {
+                background-color: #1e293b !important;
+                color: #64748b !important;
+                border: 1px solid #334155 !important;
+            }
+
+            [data-testid="stExpander"] {
+                background: rgba(30, 41, 59, .6) !important;
+                border: 1px solid rgba(148, 163, 184, .25) !important;
+                border-radius: 10px;
+            }
+
+            [data-testid="stExpander"] summary,
+            [data-testid="stExpander"] summary p {
+                color: #f1f5f9 !important;
+            }
+
+            .stCodeBlock,
+            [data-testid="stCodeBlock"],
+            [data-testid="stCode"],
+            .stCodeBlock > div,
+            [data-testid="stCodeBlock"] > div,
+            [data-testid="stCode"] > div,
+            .stCodeBlock pre,
+            [data-testid="stCodeBlock"] pre,
+            [data-testid="stCode"] pre,
+            .stCodeBlock code,
+            [data-testid="stCodeBlock"] code,
+            [data-testid="stCode"] code {
+                background-color: #1e293b !important;
+                background-image: none !important;
+                border-radius: 10px !important;
+                overflow: hidden;
+            }
+
+            .stCodeBlock,
+            [data-testid="stCodeBlock"],
+            [data-testid="stCode"] {
+                border: 1px solid #334155 !important;
+            }
+
+            .stCodeBlock pre,
+            [data-testid="stCodeBlock"] pre,
+            [data-testid="stCode"] pre,
+            .stCodeBlock code,
+            [data-testid="stCodeBlock"] code,
+            [data-testid="stCode"] code,
+            code {
+                color: #e2e8f0 !important;
+                border: 0 !important;
+                border-radius: 0 !important;
+            }
+
+            .stCodeBlock *,
+            [data-testid="stCodeBlock"] *,
+            [data-testid="stCode"] * {
+                background-color: #1e293b !important;
+                background-image: none !important;
+            }
+
+            [data-testid="stAlert"] {
+                background: #1e293b !important;
+                border: 1px solid #334155 !important;
+                border-radius: 10px !important;
+            }
+
+            [data-testid="stAlert"] p,
+            [data-testid="stAlert"] span,
+            [data-testid="stAlertContentInfo"],
+            [data-testid="stAlertContentWarning"],
+            [data-testid="stAlertContentError"],
+            [data-testid="stAlertContentSuccess"] {
+                color: #f1f5f9 !important;
+            }
+
+            hr {
+                border-color: rgba(148, 163, 184, .25) !important;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+
 
 def api_url(base: str, path: str) -> str:
     return base.rstrip("/") + path
 
 
-def post_json(base: str, path: str, payload: dict[str, Any], timeout: int = 180):
+def post_json(
+    base: str,
+    path: str,
+    payload: dict[str, Any],
+    timeout: int = 180,
+) -> tuple[dict[str, Any] | None, str | None]:
     try:
         response = requests.post(
             api_url(base, path),
@@ -299,12 +498,15 @@ def post_json(base: str, path: str, payload: dict[str, Any], timeout: int = 180)
         return None, f"Backend returned HTTP {response.status_code}: {detail}"
 
     try:
-        return response.json(), None
+        data = response.json()
+        if not isinstance(data, dict):
+            return None, "Backend returned a JSON response with an invalid shape."
+        return data, None
     except ValueError:
         return None, "Backend returned an invalid JSON response."
 
 
-def get_health(base: str):
+def get_health(base: str) -> tuple[dict[str, Any] | None, str | None]:
     try:
         response = requests.get(api_url(base, "/health"), timeout=30)
     except requests.RequestException as exc:
@@ -314,7 +516,10 @@ def get_health(base: str):
         return None, f"HTTP {response.status_code}"
 
     try:
-        return response.json(), None
+        data = response.json()
+        if not isinstance(data, dict):
+            return None, "Backend returned a health response with an invalid shape."
+        return data, None
     except ValueError:
         return None, "Invalid JSON response."
 
@@ -402,6 +607,12 @@ def compare_page(base: str, backend_available: bool) -> None:
 
             if error:
                 st.error(error)
+            elif not isinstance(generated, dict):
+                st.error("Backend returned an invalid generation response.")
+            elif not isinstance(generated.get("response_a"), str) or not isinstance(
+                generated.get("response_b"), str
+            ):
+                st.error("Backend generation response is missing response A or B.")
             else:
                 st.session_state["generated_response_a"] = generated["response_a"]
                 st.session_state["generated_response_b"] = generated["response_b"]
@@ -410,8 +621,8 @@ def compare_page(base: str, backend_available: bool) -> None:
                 st.session_state.pop("last_input", None)
                 st.rerun()
 
-    response_a_default = st.session_state.get("generated_response_a", "")
-    response_b_default = st.session_state.get("generated_response_b", "")
+    response_a_default = str(st.session_state.get("generated_response_a") or "")
+    response_b_default = str(st.session_state.get("generated_response_b") or "")
 
     col_a, col_b = st.columns(2, gap="large")
 
@@ -518,7 +729,7 @@ def compare_page(base: str, backend_available: bool) -> None:
             "testing, not real model predictions."
         )
 
-    st.caption(f"Model: {data.get('model', 'unknown')}")
+    st.caption("Model: RoBERTa")
 
 
 def feedback_page(base: str, compact: bool = False) -> None:
@@ -584,9 +795,8 @@ def evaluation_page(base: str) -> None:
     )
 
     if st.button(
-        "Run held-out evaluation",
+        "Start Held-Out Evaluation",
         type="primary",
-        use_container_width=True,
     ):
         with st.spinner(
             "Evaluating the held-out split and running position/verbosity checks..."
@@ -606,12 +816,19 @@ def evaluation_page(base: str) -> None:
         )
         return
 
-    metrics = data.get("metrics")
-    position = data.get("position_bias")
-    verbosity = data.get("verbosity_bias")
-    if not all(isinstance(section, dict) for section in (metrics, position, verbosity)):
+    metrics_value = data.get("metrics")
+    position_value = data.get("position_bias")
+    verbosity_value = data.get("verbosity_bias")
+    if not all(
+        isinstance(section, dict)
+        for section in (metrics_value, position_value, verbosity_value)
+    ):
         st.error("FastAPI returned an invalid evaluation response.")
         return
+
+    metrics = cast(dict[str, Any], metrics_value)
+    position = cast(dict[str, Any], position_value)
+    verbosity = cast(dict[str, Any], verbosity_value)
 
     def percent(value: Any) -> str:
         try:
@@ -627,7 +844,7 @@ def evaluation_page(base: str) -> None:
 
     st.success(
         f"Evaluated {data.get('examples_evaluated', 'the available')} held-out "
-        f"pairs with {data.get('model', 'the configured')} model."
+        "pairs with the RoBERTa model."
     )
 
     st.markdown("### Benchmark metrics")
@@ -751,7 +968,7 @@ def about_page(base: str, health: dict[str, Any] | None, health_error: str | Non
     with health_col2:
         st.metric("Model mode", "Demo" if (health or {}).get("demo_mode") else "Trained")
     with health_col3:
-        st.metric("Model", str((health or {}).get("model", "Not available")))
+        st.metric("Model", "RoBERTa")
 
     if st.button("Refresh backend status", use_container_width=True):
         st.rerun()
@@ -785,12 +1002,23 @@ def about_page(base: str, health: dict[str, Any] | None, health_error: str | Non
 
 
 def main() -> None:
-    inject_css()
+    dark_mode = st.session_state.get("dark_mode", True)
+    inject_css(dark_mode)
 
     backend_url = st.session_state.get("backend_url", DEFAULT_API)
     health, health_error = get_health(backend_url)
     status_key, status_title, _ = backend_status_summary(health, health_error)
     backend_available = status_key == "online"
+
+    theme_col, _ = st.columns([1, 7])
+    with theme_col:
+        if st.button(
+            "☀️ Light mode" if dark_mode else "🌙 Dark mode",
+            key="theme_toggle",
+            use_container_width=True,
+        ):
+            st.session_state["dark_mode"] = not dark_mode
+            st.rerun()
 
     st.markdown(
         f"""
