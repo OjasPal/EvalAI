@@ -27,28 +27,88 @@ def _labels(raw: str | None) -> tuple[str, ...]:
 @dataclass(frozen=True)
 class Settings:
     app_name: str = os.getenv("APP_NAME", "EvalAI")
+
     model_path: str = os.getenv(
-        "MODEL_PATH", "notebooks/roberta_reward_model_FINAL"
+        "MODEL_PATH",
+        "notebooks/roberta_reward_model_FINAL",
     )
-    use_dummy_model: bool = _bool(os.getenv("USE_DUMMY_MODEL"), False)
-    max_length: int = int(os.getenv("MAX_LENGTH", "256"))
-    ollama_url: str = os.getenv("OLLAMA_URL", "http://127.0.0.1:11434")
-    generation_model_a: str = os.getenv("GENERATION_MODEL_A", "llama3.2")
-    generation_model_b: str = os.getenv("GENERATION_MODEL_B", "qwen2.5:3b")
-    generation_timeout: int = int(os.getenv("GENERATION_TIMEOUT", "120"))
+
+    use_dummy_model: bool = _bool(
+        os.getenv("USE_DUMMY_MODEL"),
+        False,
+    )
+
+    max_length: int = int(
+        os.getenv("MAX_LENGTH", "256")
+    )
+
+    ollama_url: str = os.getenv(
+        "OLLAMA_URL",
+        "http://127.0.0.1:11434",
+    )
+
+    generation_model_a: str = os.getenv(
+        "GENERATION_MODEL_A",
+        "llama3.2",
+    )
+
+    generation_model_b: str = os.getenv(
+        "GENERATION_MODEL_B",
+        "qwen2.5:3b",
+    )
+
+    generation_timeout: int = int(
+        os.getenv("GENERATION_TIMEOUT", "120")
+    )
+
     feedback_file: str = os.getenv(
-        "FEEDBACK_FILE", str(BACKEND_DIR / "data" / "feedback.jsonl")
+        "FEEDBACK_FILE",
+        str(BACKEND_DIR / "data" / "feedback.jsonl"),
     )
+
     model_label_mapping: tuple[str, ...] = field(
-        default_factory=lambda: _labels(os.getenv("MODEL_LABEL_MAPPING"))
+        default_factory=lambda: _labels(
+            os.getenv("MODEL_LABEL_MAPPING")
+        )
     )
+
     project_root: Path = PROJECT_ROOT
+
     cors_origins: list[str] = field(
         default_factory=lambda: [
             origin.strip()
             for origin in os.getenv("CORS_ORIGINS", "*").split(",")
             if origin.strip()
         ]
+    )
+
+    # -----------------------------
+    # Human-feedback training
+    # -----------------------------
+
+    models_dir: str = os.getenv(
+        "MODELS_DIR",
+        str(PROJECT_ROOT / "models"),
+    )
+
+    min_feedback_for_retrain: int = int(
+        os.getenv("MIN_FEEDBACK_FOR_RETRAIN", "20")
+    )
+
+    training_epochs: int = int(
+        os.getenv("TRAINING_EPOCHS", "1")
+    )
+
+    training_batch_size: int = int(
+        os.getenv("TRAINING_BATCH_SIZE", "4")
+    )
+
+    training_learning_rate: float = float(
+        os.getenv("TRAINING_LEARNING_RATE", "1e-5")
+    )
+
+    training_max_feedback: int = int(
+        os.getenv("TRAINING_MAX_FEEDBACK", "2000")
     )
 
 

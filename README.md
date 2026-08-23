@@ -34,6 +34,8 @@ The result is a practical evaluation interface rather than a single opaque score
 - **Side-by-side response generation:** Generate two answers from the same prompt.
 - **Preference prediction:** Use the trained RoBERTa model to rank the responses.
 - **Human review:** Record human preference as A, B, or Tie.
+- **Rating-weighted feedback:** Capture helpfulness, correctness, relevance, clarity, and safety ratings for training signals.
+- **Safe feedback retraining:** Fine-tune a candidate model and activate it only when it outperforms the current model on held-out evaluation.
 - **Held-out evaluation:** Measure accuracy, precision, recall, F1-score, and ROC-AUC.
 - **Bias diagnostics:** Check sensitivity to response order and answer verbosity.
 - **Local and private workflow:** Run the application with local models and local data.
@@ -73,7 +75,8 @@ User prompt
 3. Select **Compare Responses** to view scores, confidence, and the predicted winner.
 4. Open **Human Feedback** and record your preference.
 5. Open **Evaluation & Bias** to run benchmark and diagnostic checks.
-6. Use the **About** tab to confirm backend and model readiness.
+6. Use the retraining panel to train and validate a candidate model from collected feedback.
+7. Use the **About** tab to confirm backend and model readiness.
 
 ## Project Structure
 
@@ -153,6 +156,8 @@ cd <project-directory>\EvalAI
 .\.venv\Scripts\Activate.ps1
 python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000
 ```
+
+The backend starts immediately while the local RoBERTa model loads in the background. The `/health` endpoint reports `starting` until the model is ready.
 
 Terminal 3 (Frontend):
 
@@ -247,6 +252,7 @@ BACKEND_URL=http://127.0.0.1:8000
 3. POST /predict: score both responses and return winner A or B
 4. POST /feedback: save human preference
 5. POST /evaluation: run held-out benchmark and bias checks
+6. POST /retrain: train, evaluate, and conditionally activate a feedback-trained candidate model
 
 ## Validation Commands
 

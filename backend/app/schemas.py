@@ -4,28 +4,58 @@ from pydantic import BaseModel, Field, field_validator
 
 
 class PredictRequest(BaseModel):
-    prompt: str = Field(..., min_length=1, max_length=12000)
-    response_a: str = Field(..., min_length=1, max_length=30000)
-    response_b: str = Field(..., min_length=1, max_length=30000)
+    prompt: str = Field(
+        ...,
+        min_length=1,
+        max_length=12000,
+    )
 
-    @field_validator("prompt", "response_a", "response_b")
+    response_a: str = Field(
+        ...,
+        min_length=1,
+        max_length=30000,
+    )
+
+    response_b: str = Field(
+        ...,
+        min_length=1,
+        max_length=30000,
+    )
+
+    @field_validator(
+        "prompt",
+        "response_a",
+        "response_b",
+    )
     @classmethod
     def strip_text(cls, value: str) -> str:
         value = value.strip()
+
         if not value:
-            raise ValueError("Text cannot be empty.")
+            raise ValueError(
+                "Text cannot be empty."
+            )
+
         return value
 
 
 class GenerateRequest(BaseModel):
-    prompt: str = Field(..., min_length=1, max_length=12000)
+    prompt: str = Field(
+        ...,
+        min_length=1,
+        max_length=12000,
+    )
 
     @field_validator("prompt")
     @classmethod
     def strip_prompt(cls, value: str) -> str:
         value = value.strip()
+
         if not value:
-            raise ValueError("Prompt cannot be empty.")
+            raise ValueError(
+                "Prompt cannot be empty."
+            )
+
         return value
 
 
@@ -38,27 +68,89 @@ class GenerateResponse(BaseModel):
 
 class PredictResponse(BaseModel):
     request_id: str
+
     winner: Literal["A", "B"]
-    score_a: float = Field(..., ge=0.0, le=1.0)
-    score_b: float = Field(..., ge=0.0, le=1.0)
-    confidence: float = Field(..., ge=0.0, le=1.0)
+
+    score_a: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+    )
+
+    score_b: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+    )
+
+    confidence: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+    )
+
     model: str
     demo_mode: bool
 
 
 class FeedbackRequest(BaseModel):
     request_id: str | None = None
-    prompt: str = Field(..., min_length=1, max_length=12000)
-    response_a: str = Field(..., min_length=1, max_length=30000)
-    response_b: str = Field(..., min_length=1, max_length=30000)
-    human_preference: Literal["A", "B", "Tie"]
 
-    @field_validator("prompt", "response_a", "response_b")
+    prompt: str = Field(
+        ...,
+        min_length=1,
+        max_length=12000,
+    )
+
+    response_a: str = Field(
+        ...,
+        min_length=1,
+        max_length=30000,
+    )
+
+    response_b: str = Field(
+        ...,
+        min_length=1,
+        max_length=30000,
+    )
+
+    human_preference: Literal[
+        "A",
+        "B",
+        "Tie",
+    ]
+
+    # Multi-dimensional human evaluation.
+    # Defaults keep older A/B/Tie clients and existing stored data compatible.
+    helpfulness_a: int = Field(3, ge=1, le=5)
+    helpfulness_b: int = Field(3, ge=1, le=5)
+
+    correctness_a: int = Field(3, ge=1, le=5)
+    correctness_b: int = Field(3, ge=1, le=5)
+
+    relevance_a: int = Field(3, ge=1, le=5)
+    relevance_b: int = Field(3, ge=1, le=5)
+
+    clarity_a: int = Field(3, ge=1, le=5)
+    clarity_b: int = Field(3, ge=1, le=5)
+
+    safety_a: int = Field(3, ge=1, le=5)
+    safety_b: int = Field(3, ge=1, le=5)
+
+    @field_validator(
+        "prompt",
+        "response_a",
+        "response_b",
+    )
     @classmethod
     def strip_text(cls, value: str) -> str:
         value = value.strip()
+
         if not value:
-            raise ValueError("Text cannot be empty.")
+            raise ValueError(
+                "Text cannot be empty."
+            )
+
         return value
 
 
@@ -67,66 +159,206 @@ class FeedbackResponse(BaseModel):
     feedback_id: str
 
 
-class EvaluationRequest(BaseModel):
-    """Optional cap is useful for a quick local smoke test of the evaluator."""
+class RetrainRequest(BaseModel):
+    min_feedback: int | None = Field(
+        default=None,
+        ge=2,
+        le=100000,
+    )
 
-    limit: int | None = Field(default=None, ge=1, le=100000)
+
+class RetrainResponse(BaseModel):
+    status: Literal[
+        "completed",
+        "rejected",
+        "failed",
+    ]
+
+    message: str
+
+    feedback_examples: int
+
+    model: str
+
+
+class EvaluationRequest(BaseModel):
+    """Optional cap for a quick local evaluator smoke test."""
+
+    limit: int | None = Field(
+        default=None,
+        ge=1,
+        le=100000,
+    )
 
 
 class ClassMetricsResponse(BaseModel):
-    precision: float = Field(..., ge=0.0, le=1.0)
-    recall: float = Field(..., ge=0.0, le=1.0)
-    f1: float = Field(..., ge=0.0, le=1.0)
-    support: int = Field(..., ge=0)
+    precision: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+    )
+
+    recall: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+    )
+
+    f1: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+    )
+
+    support: int = Field(
+        ...,
+        ge=0,
+    )
 
 
 class EvaluationMetricsResponse(BaseModel):
-    """Metrics use label 0 for A preferred and label 1 for B preferred."""
+    """0 = A preferred, 1 = B preferred."""
 
-    accuracy: float = Field(..., ge=0.0, le=1.0)
-    precision: float = Field(..., ge=0.0, le=1.0)
-    recall: float = Field(..., ge=0.0, le=1.0)
-    f1: float = Field(..., ge=0.0, le=1.0)
-    roc_auc: float | None = Field(default=None, ge=0.0, le=1.0)
+    accuracy: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+    )
+
+    precision: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+    )
+
+    recall: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+    )
+
+    f1: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+    )
+
+    roc_auc: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+    )
+
     roc_auc_reason: str | None = None
+
     confusion_matrix: list[list[int]]
-    class_metrics: dict[str, ClassMetricsResponse]
+
+    class_metrics: dict[
+        str,
+        ClassMetricsResponse,
+    ]
 
 
 class PositionBiasResponse(BaseModel):
-    """A consistent swap changes the winner from A to B, or B to A."""
+    """A consistent swap changes the winner."""
 
-    pairs_evaluated: int = Field(..., ge=1)
-    consistent_swaps: int = Field(..., ge=0)
-    inconsistent_swaps: int = Field(..., ge=0)
-    consistent_swap_rate: float = Field(..., ge=0.0, le=1.0)
-    inconsistent_swap_rate: float = Field(..., ge=0.0, le=1.0)
-    original_first_position_win_rate: float = Field(..., ge=0.0, le=1.0)
-    swapped_first_position_win_rate: float = Field(..., ge=0.0, le=1.0)
-    combined_first_position_win_rate: float = Field(..., ge=0.0, le=1.0)
+    pairs_evaluated: int = Field(
+        ...,
+        ge=1,
+    )
+
+    consistent_swaps: int = Field(
+        ...,
+        ge=0,
+    )
+
+    inconsistent_swaps: int = Field(
+        ...,
+        ge=0,
+    )
+
+    consistent_swap_rate: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+    )
+
+    inconsistent_swap_rate: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+    )
+
+    original_first_position_win_rate: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+    )
+
+    swapped_first_position_win_rate: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+    )
+
+    combined_first_position_win_rate: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+    )
 
 
 class VerbosityBiasResponse(BaseModel):
-    """Negative length/prediction correlation indicates a longer-response tendency."""
+    pairs_evaluated: int = Field(
+        ...,
+        ge=1,
+    )
 
-    pairs_evaluated: int = Field(..., ge=1)
-    pairs_with_different_lengths: int = Field(..., ge=0)
-    longer_response_wins: int = Field(..., ge=0)
-    longer_response_win_rate: float | None = Field(default=None, ge=0.0, le=1.0)
+    pairs_with_different_lengths: int = Field(
+        ...,
+        ge=0,
+    )
+
+    longer_response_wins: int = Field(
+        ...,
+        ge=0,
+    )
+
+    longer_response_win_rate: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=1.0,
+    )
+
     longer_response_win_rate_excess_over_chance: float | None = Field(
-        default=None, ge=-0.5, le=0.5
+        default=None,
+        ge=-0.5,
+        le=0.5,
     )
+
     length_delta_prediction_correlation: float | None = Field(
-        default=None, ge=-1.0, le=1.0
+        default=None,
+        ge=-1.0,
+        le=1.0,
     )
+
     correlation_reason: str | None = None
 
 
 class EvaluationResponse(BaseModel):
     dataset: str
+
     model: str
+
     demo_mode: bool
-    examples_evaluated: int = Field(..., ge=1)
+
+    examples_evaluated: int = Field(
+        ...,
+        ge=1,
+    )
+
     metrics: EvaluationMetricsResponse
+
     position_bias: PositionBiasResponse
+
     verbosity_bias: VerbosityBiasResponse

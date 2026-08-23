@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from threading import Thread
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,13 +13,21 @@ model = PreferenceModel(settings)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    try:
-        model.load()
-    except Exception as exc:  # pragma: no cover - runtime guard for startup health
-        model.load_error = f"Startup failed while loading the reward model: {exc}"
-        model.demo_mode = False
     set_model(model)
+
+    def load_model() -> None:
+        try:
+            model.load()
+        except Exception as exc:  # pragma: no cover - runtime guard for startup health
+            model.load_error = f"Startup failed while loading the reward model: {exc}"
+            model.demo_mode = False
+
+    loader = Thread(target=load_model, name="evalai-model-loader", daemon=True)
+    loader.start()
+
     yield
+
+    loader.join(timeout=5)
     model.unload()
 
 
