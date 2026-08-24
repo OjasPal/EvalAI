@@ -388,6 +388,18 @@ def inject_css(dark_mode: bool = False) -> None:
             font-weight: 750;
             color: #1e293b;
         }
+        
+.confusion-matrix {
+    border: 1px solid rgba(148,163,184,.3);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    background: rgba(79, 70, 229, .06);
+    overflow-x: auto;
+}
+.confusion-matrix table { width: 100%; border-collapse: collapse; font-size: .95rem; }
+.confusion-matrix th, .confusion-matrix td { padding: .45rem .75rem; text-align: right; color: var(--text); }
+.confusion-matrix th:first-child, .confusion-matrix td:first-child { text-align: left; color: var(--muted); font-weight: 600; }
+.confusion-matrix th { color: var(--muted); font-weight: 700; text-transform: uppercase; font-size: .78rem; border-bottom: 1px solid rgba(148,163,184,.25); }
 
         /* Number input */
         [data-testid="stNumberInput"] input {
@@ -586,6 +598,10 @@ def inject_css(dark_mode: bool = False) -> None:
                 border: 1px solid #334155 !important;
                 color: #f8fafc !important;
             }
+            
+.confusion-matrix { background: rgba(30, 41, 59, .8) !important; border-color: rgba(148, 163, 184, .25) !important; }
+.confusion-matrix th, .confusion-matrix td { color: #f1f5f9 !important; }
+.confusion-matrix th:first-child, .confusion-matrix td:first-child { color: #94a3b8 !important; }
 
             .feedback-stat-label {
                 color: #94a3b8 !important;
@@ -1769,18 +1785,21 @@ def evaluation_page(
             for row in matrix
         )
     ):
-
         st.markdown(
             "#### Confusion matrix"
         )
 
-        st.code(
-            "                 Predicted A   Predicted B\n"
-            f"Actual A             {matrix[0][0]:>6}        "
-            f"{matrix[0][1]:>6}\n"
-            f"Actual B             {matrix[1][0]:>6}        "
-            f"{matrix[1][1]:>6}",
-            language=None,
+        st.markdown(
+            f"""
+            <div class="confusion-matrix">
+                <table>
+                    <tr><th></th><th>Predicted A</th><th>Predicted B</th></tr>
+                    <tr><td>Actual A</td><td>{matrix[0][0]}</td><td>{matrix[0][1]}</td></tr>
+                    <tr><td>Actual B</td><td>{matrix[1][0]}</td><td>{matrix[1][1]}</td></tr>
+                </table>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
     class_metrics = metrics.get(
